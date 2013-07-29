@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.android.skeletonapp">
+    
+    <uses-sdk android:targetSdkVersion="11" android:minSdkVersion="7"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <application android:label="@string/skeleton_app">
+
+        <!-- An Activity in the application - this is something the user
+             can launch and interact with.  The "name" attribute is the
+             name of the class within your package that implements this
+             activity. -->
+        <activity android:name="SkeletonActivity">
+
+            <!-- An IntentFilter tells the system when it should use your
+                 activity.  This allows the user to get to your activity
+                 without someone having to explicitly know to launch your
+                 class "com.examplel.android.skeletonapp.SkeletonActivity". -->
+            <intent-filter>
+                <!-- The MAIN action describes a main entry point into an
+                     activity, without any associated data. -->
+                <action android:name="android.intent.action.MAIN" />
+
+                <!-- This places this activity into the main app list. -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+    </application>
+
+</manifest>
