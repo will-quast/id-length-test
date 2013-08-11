@@ -6,7 +6,9 @@ import java.util.Date;
 public class Thing implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	private String id;
+	private Long idNum;
+	private String idStr;
+	
 	private String childA;
 	private String childB;
 	
@@ -17,11 +19,18 @@ public class Thing implements Serializable {
 	private Date date;
 	
 	
-	public String getId() {
-		return id;
+	
+	public Long getIdNum() {
+		return idNum;
 	}
-	public void setId(String id) {
-		this.id = id;
+	public void setIdNum(Long idNum) {
+		this.idNum = idNum;
+	}
+	public String getIdStr() {
+		return idStr;
+	}
+	public void setIdStr(String idStr) {
+		this.idStr = idStr;
 	}
 	public String getChildA() {
 		return childA;
