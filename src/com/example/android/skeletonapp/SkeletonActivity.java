@@ -6,26 +6,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
-
-import org.afree.chart.AFreeChart;
-import org.afree.chart.ChartFactory;
-import org.afree.chart.axis.ValueAxis;
-import org.afree.chart.plot.CategoryPlot;
-import org.afree.chart.plot.PlotOrientation;
-import org.afree.data.category.DefaultCategoryDataset;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -38,6 +25,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Window;
+import android.widget.FrameLayout;
 
 import com.google.gson.Gson;
 
@@ -52,9 +40,7 @@ public class SkeletonActivity extends Activity {
 	
 	private Gson gson;
 	
-	private ChartView chartView;
-	private AFreeChart chart;
-	private DefaultCategoryDataset dataset;
+	private Stats stats;
     
     public SkeletonActivity() {
     }
@@ -63,14 +49,11 @@ public class SkeletonActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        chartView = new ChartView(this);
-        setContentView(chartView);
+        setContentView(R.layout.skeleton_activity);
         
-        dataset = new DefaultCategoryDataset();
-        chart = ChartFactory.createBarChart("stuff", "test", "duration", dataset, PlotOrientation.VERTICAL, true, false, false);
-        CategoryPlot plot = chart.getCategoryPlot();
-        plot.getRangeAxis().setLowerBound(0.0);
-        chartView.setChart(chart);
+        FrameLayout content = (FrameLayout) findViewById(R.id.content);
+        
+        stats = new Stats(this, "test", content);
         
 //        FileCreateTask task = new FileCreateTask();
 //        task.execute();
@@ -178,40 +161,28 @@ public class SkeletonActivity extends Activity {
     		String stringPath = "file://" + Environment.getExternalStorageDirectory().getAbsolutePath() + "/output_STRING.txt";
     		String hrefPath = "file://" + Environment.getExternalStorageDirectory().getAbsolutePath() + "/output_HREF.txt";
     		
-    		getIt(TestType.NUMBER, numberPath, "db_NUMBER",
-					new Stats("NUMBER"));
-    		getIt(TestType.STRING, stringPath, "db_STRING",
-    				new Stats("STRING"));
-    		getIt(TestType.HREF, hrefPath, "db_HREF",
-    				new Stats("HREF"));
+    		getIt(TestType.NUMBER, numberPath, "db_NUMBER");
+    		getIt(TestType.STRING, stringPath, "db_STRING");
+    		getIt(TestType.HREF, hrefPath, "db_HREF");
+    		
+    		stats.reset();
     		
     		int testRuns = 40;
-    		
-    		Stats num = new Stats("NUMBER");
-    		Stats str = new Stats("STRING");
-    		Stats href = new Stats("HREF");
     		
     		for (int i=0; i<testRuns; i++) {
     			
     			pause();
-        		getIt(TestType.NUMBER, numberPath, "db_NUMBER", num);
-        		num.update(dataset);
+        		getIt(TestType.NUMBER, numberPath, "db_NUMBER");
         		publishProgress();
         		
         		pause();
-        		getIt(TestType.STRING, stringPath, "db_STRING", str);
-        		str.update(dataset);
+        		getIt(TestType.STRING, stringPath, "db_STRING");
         		publishProgress();
         		
         		pause();
-        		getIt(TestType.HREF, hrefPath, "db_HREF", href);
-        		href.update(dataset);
+        		getIt(TestType.HREF, hrefPath, "db_HREF");
         		publishProgress();
     		}
-    		
-    		Log.d("asdf", str.toString());
-    		Log.d("asdf", num.toString());
-    		Log.d("asdf", href.toString());
     		
     		return null;
     	}
@@ -224,27 +195,26 @@ public class SkeletonActivity extends Activity {
     	
     	@Override
     	protected void onProgressUpdate(Void... values) {
-    		chartView.restoreAutoBounds();
-    		chartView.repaint();
+    		stats.update();
     	}
     	
-    	private void getIt(TestType testType, String path, String dbName, Stats stats) {
-    		
+    	private void getIt(TestType testType, String path, String dbName) {
+    		String testName = testType.toString();
     		File dbfile = getDatabasePath(dbName);
 			dbfile.delete();
 			
-    		stats.start("full");
+    		stats.start(testName, "full");
     		try {
-    			stats.start("fetch");
+    			stats.start(testName, "fetch");
     			URL url = new URL(path);
 				URLConnection http = url.openConnection();
 				Reader reader = new InputStreamReader(new BufferedInputStream(http.getInputStream()));
 				Gson gson = getGson();
 				ThingList things = gson.fromJson(reader, ThingList.class);
 				reader.close();
-				stats.end("fetch");
+				stats.end(testName, "fetch");
 				
-				stats.start("save");
+				stats.start(testName, "save");
 				TestOpenHelper helper = new TestOpenHelper(getApplicationContext(), dbName, testType);
 				SQLiteDatabase database = helper.getWritableDatabase();
 				database.beginTransaction();
@@ -260,23 +230,23 @@ public class SkeletonActivity extends Activity {
 				database.setTransactionSuccessful();
 				database.endTransaction();
 				database.close();
-				stats.end("save");
+				stats.end(testName, "save");
 				
 				Collections.shuffle(ids);
 				
-				stats.start("load");
+				stats.start(testName, "load");
 				database = helper.getWritableDatabase();
 				for(Object id:ids) {
 					unstoreIt(testType, database, id.toString());
 				}
 				database.close();
-				stats.end("load");
+				stats.end(testName, "load");
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
     		
-    		stats.end("full");
+    		stats.end(testName, "full");
     		
     		Log.d("asdf", path);
     	}
@@ -371,52 +341,6 @@ public class SkeletonActivity extends Activity {
     }
     
     
-    protected class Stats {
-    	
-    	private String name;
-    	private Map<String, Long> startTimes = new HashMap<String, Long>();
-    	private Map<String, SummaryStatistics> stats = new LinkedHashMap<String, SummaryStatistics>();
-    	
-    	public Stats(String name) {
-    		this.name = name;
-    	}
-    	
-    	public void start(String param) {
-    		long now = System.currentTimeMillis();
-    		startTimes.put(param, now);
-    	}
-    	
-    	public void end(String param) {
-    		long now = System.currentTimeMillis();
-    		long start = startTimes.remove(param);
-    		long dur = now - start;
-    		SummaryStatistics summary = stats.get(param);
-    		if (summary == null) {
-    			summary = new SummaryStatistics();
-    			stats.put(param, summary);
-    		}
-    		summary.addValue(dur);
-    	}
-    	
-    	@Override
-    	public String toString() {
-    		StringBuilder sb = new StringBuilder("====="+name+ "=====\n");
-    		
-    		for(Entry<String, SummaryStatistics> entry : stats.entrySet()){
-    			
-    			sb.append("@"+entry.getKey() + ": "+entry.getValue().toString());
-    		}
-    		
-    		return sb.toString();
-    	}
-    	
-    	public void update(DefaultCategoryDataset ds) {
-    		
-    		for(Entry<String, SummaryStatistics> entry : stats.entrySet()){
-    			
-    			ds.setValue(entry.getValue().getMean(), entry.getKey(), name);
-    		}
-    	}
-    }
+    
 
 }
