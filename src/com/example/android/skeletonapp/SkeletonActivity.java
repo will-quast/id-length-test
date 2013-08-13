@@ -40,7 +40,7 @@ public class SkeletonActivity extends Activity {
 	
 	private Gson gson;
 	
-	private Stats stats;
+	private Stopwatch stopwatch;
     
     public SkeletonActivity() {
     }
@@ -53,7 +53,7 @@ public class SkeletonActivity extends Activity {
         
         FrameLayout content = (FrameLayout) findViewById(R.id.content);
         
-        stats = new Stats(this, "test", content);
+        stopwatch = new Stopwatch(this, "test", content);
         
 //        FileCreateTask task = new FileCreateTask();
 //        task.execute();
@@ -73,7 +73,7 @@ public class SkeletonActivity extends Activity {
     
     private void pause() {
 		try {
-			Thread.sleep(200);
+			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -165,9 +165,9 @@ public class SkeletonActivity extends Activity {
     		getIt(TestType.STRING, stringPath, "db_STRING");
     		getIt(TestType.HREF, hrefPath, "db_HREF");
     		
-    		stats.reset();
+    		stopwatch.reset();
     		
-    		int testRuns = 40;
+    		int testRuns = 120;
     		
     		for (int i=0; i<testRuns; i++) {
     			
@@ -195,7 +195,7 @@ public class SkeletonActivity extends Activity {
     	
     	@Override
     	protected void onProgressUpdate(Void... values) {
-    		stats.update();
+    		stopwatch.update();
     	}
     	
     	private void getIt(TestType testType, String path, String dbName) {
@@ -203,18 +203,18 @@ public class SkeletonActivity extends Activity {
     		File dbfile = getDatabasePath(dbName);
 			dbfile.delete();
 			
-    		stats.start(testName, "full");
+    		stopwatch.start(testName, "full");
     		try {
-    			stats.start(testName, "fetch");
+    			stopwatch.start(testName, "fetch");
     			URL url = new URL(path);
 				URLConnection http = url.openConnection();
 				Reader reader = new InputStreamReader(new BufferedInputStream(http.getInputStream()));
 				Gson gson = getGson();
 				ThingList things = gson.fromJson(reader, ThingList.class);
 				reader.close();
-				stats.end(testName, "fetch");
+				stopwatch.end(testName, "fetch");
 				
-				stats.start(testName, "save");
+				stopwatch.start(testName, "save");
 				TestOpenHelper helper = new TestOpenHelper(getApplicationContext(), dbName, testType);
 				SQLiteDatabase database = helper.getWritableDatabase();
 				database.beginTransaction();
@@ -230,23 +230,23 @@ public class SkeletonActivity extends Activity {
 				database.setTransactionSuccessful();
 				database.endTransaction();
 				database.close();
-				stats.end(testName, "save");
+				stopwatch.end(testName, "save");
 				
 				Collections.shuffle(ids);
 				
-				stats.start(testName, "load");
+				stopwatch.start(testName, "load");
 				database = helper.getWritableDatabase();
 				for(Object id:ids) {
 					unstoreIt(testType, database, id.toString());
 				}
 				database.close();
-				stats.end(testName, "load");
+				stopwatch.end(testName, "load");
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
     		
-    		stats.end(testName, "full");
+    		stopwatch.end(testName, "full");
     		
     		Log.d("asdf", path);
     	}

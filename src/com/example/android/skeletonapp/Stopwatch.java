@@ -15,20 +15,20 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import android.content.Context;
 import android.view.ViewGroup;
 
-public class Stats {
+public class Stopwatch {
 	
 	private String title;
-	private ChartView view;
+	private StopwatchView view;
 	private AFreeChart chart;
 	private DefaultCategoryDataset chartModel;
 	
 	private Map<String, Map<String, Long>> clocks;
 	private Map<String, Map<String, SummaryStatistics>> stats;
 	
-	public Stats(Context context, String title, ViewGroup container) {
+	public Stopwatch(Context context, String title, ViewGroup container) {
 		this.title = title;
 		
-		view = new ChartView(context);
+		view = new StopwatchView(context);
 		chartModel = new DefaultCategoryDataset();
         chart = ChartFactory.createBarChart(title, "test", "duration", chartModel, PlotOrientation.VERTICAL, true, false, false);
         CategoryPlot plot = chart.getCategoryPlot();
@@ -39,12 +39,12 @@ public class Stats {
 	}
 	
 	public void start(String domain, String range) {
-		long now = System.currentTimeMillis();
 		Map<String, Long> domainStart = clocks.get(domain);
 		if (domainStart == null) {
 			domainStart = new HashMap<String, Long>();
 			clocks.put(domain, domainStart);
 		}
+		long now = System.currentTimeMillis();
 		domainStart.put(range, now);
 	}
 	
@@ -70,19 +70,10 @@ public class Stats {
 			domainSummary.put(range, summary);
 		}
 		summary.addValue(dur);
+		chartModel.setValue(summary.getMean(), range, domain);
 	}
 	
 	public void update() {
-		
-		for(Entry<String, Map<String, SummaryStatistics>> domainEntry : stats.entrySet()) {
-			String domainText = domainEntry.getKey();
-			Map<String, SummaryStatistics> domainStats = domainEntry.getValue();
-			for(Entry<String, SummaryStatistics> range : domainStats.entrySet()) {
-				String rangeText = range.getKey();
-				SummaryStatistics summary = range.getValue();
-				chartModel.setValue(summary.getMean(), rangeText, domainText);
-			}
-		}
 		
 		view.restoreAutoBounds();
 		view.repaint();

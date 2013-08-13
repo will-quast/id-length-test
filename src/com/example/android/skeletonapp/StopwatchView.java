@@ -43,11 +43,13 @@
 
 package com.example.android.skeletonapp;
 
-import org.afree.ui.RectangleInsets;
+import java.util.EventListener;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.afree.chart.AFreeChart;
+import org.afree.chart.ChartRenderingInfo;
 import org.afree.chart.ChartTouchEvent;
 import org.afree.chart.ChartTouchListener;
-import org.afree.chart.ChartRenderingInfo;
-import org.afree.chart.AFreeChart;
 import org.afree.chart.entity.ChartEntity;
 import org.afree.chart.entity.EntityCollection;
 import org.afree.chart.event.ChartChangeEvent;
@@ -61,14 +63,10 @@ import org.afree.chart.plot.PlotRenderingInfo;
 import org.afree.chart.plot.Zoomable;
 import org.afree.graphics.geom.Dimension;
 import org.afree.graphics.geom.RectShape;
-import org.afree.graphics.SolidColor;
-
-import java.util.EventListener;
-import java.util.concurrent.CopyOnWriteArrayList;
+import org.afree.ui.RectangleInsets;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -77,19 +75,19 @@ import android.view.MotionEvent;
 import android.view.View;
 
 
-public class ChartView extends View 
+public class StopwatchView extends View 
     implements ChartChangeListener, ChartProgressListener{
     
     /** The user interface thread handler. */
     private Handler mHandler;
 
-    public ChartView(Context context) {
+    public StopwatchView(Context context) {
         super(context);
         mHandler = new Handler();
         this.initialize();
     }
     
-    public ChartView(Context context, AttributeSet attrs) {
+    public StopwatchView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mHandler = new Handler();
         this.initialize();
@@ -106,9 +104,6 @@ public class ChartView extends View
         this.maximumDrawWidth = DEFAULT_MAXIMUM_DRAW_WIDTH;
         this.maximumDrawHeight = DEFAULT_MAXIMUM_DRAW_HEIGHT;
         this.moveTriggerDistance = DEFAULT_MOVE_TRIGGER_DISTANCE;
-        new SolidColor(Color.BLUE);
-        new SolidColor(Color.argb(0, 0, 255, 63));
-        new java.util.ArrayList();
     }
     
     /**
